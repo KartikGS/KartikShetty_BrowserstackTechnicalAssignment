@@ -14,59 +14,63 @@ describe("BStack demo test", () => {
     await driver.quit();
   })
   
-  test("login test", async () => {
-    await driver.get("https://bstackdemo.com");
-    await driver.wait(until.titleMatches(/StackDemo/i), 10000);
+  test("search and filter products", async () => {
+    await driver.get("https://www.flipkart.com");
 
-    await driver.wait(until.elementLocated(By.css("#signin")));
-    await driver.findElement(By.css("#signin")).click();
+    // Close the login popup if it appears
+    try {
+      await driver.wait(until.elementLocated(By.css('button._2KpZ6l._2doB4z')), 10000);
+      await driver.findElement(By.css('button._2KpZ6l._2doB4z')).click();
+    } catch (e) {
+      console.log("No login popup appeared.");
+    }
 
-    await driver.wait(until.elementLocated(By.css("#username input")));
+    // Search for "Samsung Galaxy S10"
+    let searchBox = await driver.findElement(By.name('q'));
+    await searchBox.sendKeys('Samsung Galaxy S10', Key.RETURN);
 
-    await driver
-      .findElement(By.css("#username input"))
-      .sendKeys("locked_user", Key.ENTER);
+    // Click on "Mobiles" in categories
+    await driver.wait(until.elementLocated(By.xpath("/html/body/div/div/div[3]/div[1]/div[1]/div/div[1]/div/div/section/div[3]/div/a")), 10000);
+    await driver.findElement(By.xpath("/html/body/div/div/div[3]/div[1]/div[1]/div/div[1]/div/div/section/div[3]/div/a")).click();
 
-    await driver
-      .findElement(By.css("#password input"))
-      .sendKeys("testingisfun99", Key.ENTER);
+    // Apply Brand: Samsung filter
+    await driver.wait(until.elementLocated(By.xpath("/html/body/div/div/div[3]/div[1]/div[1]/div/div[1]/div/section[3]/div[2]/div/div/div/label/div[2]")), 10000);
+    await driver.findElement(By.xpath("/html/body/div/div/div[3]/div[1]/div[1]/div/div[1]/div/section[3]/div[2]/div/div/div/label/div[2]")).click();
 
-    await driver.findElement(By.css("#login-btn")).click();
+    // Wait for the results to load
+    await driver.sleep(5000);
 
-    await driver.wait(until.elementLocated(By.css(".api-error")));
+    // Apply Flipkart Assured filter
+    await driver.wait(until.elementLocated(By.xpath("/html/body/div/div/div[3]/div[1]/div[1]/div/div[1]/div/section[4]/label/div[2]/div")), 10000);
+    await driver.findElement(By.xpath("/html/body/div/div/div[3]/div[1]/div[1]/div/div[1]/div/section[4]/label/div[2]/div")).click();
 
-    expect(await driver.findElement(By.css(".api-error")).getText()).toBe(
-      "Your account has been locked."
-    );
-  }, 1000000);
+    // Sort by Price -> High to Low
+    await driver.wait(until.elementLocated(By.xpath("//div[text()='Price -- High to Low']")), 10000);
+    let priceHighToLowElement = await driver.findElement(By.xpath("//div[text()='Price -- High to Low']"));
 
-  test(
-    "add products to cart",
-    async () => {
-        await driver.get("https://bstackdemo.com/");
-        await driver.wait(until.titleMatches(/StackDemo/i), 10000);
+    // Click on the element
+    await priceHighToLowElement.click();
 
-        // locating product on webpage and getting name of the product
-        await driver.wait(until.elementLocated(By.xpath('//*[@id="1"]/p')));
-        let productText = await driver
-          .findElement(By.xpath('//*[@id="1"]/p'))
-          .getText();
-        // clicking the 'Add to cart' button
-        await driver.findElement(By.xpath('//*[@id="1"]/div[4]')).click();
-        // waiting until the Cart pane has been displayed on the webpage
-        await driver.wait(until.elementLocated(By.className("float-cart__content")));
-        await driver.findElement(By.className("float-cart__content"));
-        // locating product in cart and getting name of the product in cart
-        let productCartText = await driver
-          .findElement(
-            By.xpath(
-              '//*[@id="__next"]/div/div/div[2]/div[2]/div[2]/div/div[3]/p[1]'
-            )
-          )
-          .getText();
-        // checking whether product has been added to cart by comparing product name
-        expect(productText).toBe(productCartText);
-    },
-    10000000
-  );
+    // Wait for the results to load
+    await driver.sleep(5000);
+
+    // Read the set of results that show up on page 1
+    let productElements = await driver.findElements(By.css('div.KzDlHZ'));
+    let priceElements = await driver.findElements(By.css('div.Nx9bqj._4b5DiR'));
+    let linkElements = await driver.findElements(By.css('a.CGtC98'));
+
+    // Extract text and attributes from elements
+    let productNames = await Promise.all(productElements.map(async element => await element.getText()));
+    let displayPrices = await Promise.all(priceElements.map(async element => await element.getText()));
+    let productLinks = await Promise.all(linkElements.map(async element => await element.getAttribute('href')));
+
+    // Combine into one array of objects
+    const results = productNames.map((name, index) => ({
+      productName: name,
+      displayPrice: displayPrices[index],
+      productLink: productLinks[index]
+    }));
+
+    console.log(results);
+  }, 300000);
 });
