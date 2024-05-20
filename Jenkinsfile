@@ -7,7 +7,8 @@ pipeline {
                 // add commands to run test
                 // Following are some of the example commands -----
                 sh 'npm install'
-                sh 'jest src/sample.test.js'
+                sh 'selenium-standalone start'
+                sh 'npm run test'
                 //sh 'browserstack-node-sdk jest src/sample.test.js'
             }
              // Enable reporting in Jenkins
