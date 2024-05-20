@@ -7,7 +7,7 @@ pipeline {
                 // add commands to run test
                 // Following are some of the example commands -----
                 sh 'npm install'
-                sh 'selenium-standalone start'
+                sh 'npx webdriver-manager start'
                 sh 'npm run test'
                 //sh 'browserstack-node-sdk jest src/sample.test.js'
             }
